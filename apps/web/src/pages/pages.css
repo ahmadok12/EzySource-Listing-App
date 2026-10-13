@@ -38,3 +38,40 @@
   font: var(--text-meta);
   color: var(--neutral-700);
 }
+
+.page--narrow {
+  max-width: 440px;
+}
+
+.page__form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+}
+
+.page__error {
+  font: var(--text-meta);
+  color: var(--accent-700);
+}
+
+.page__qr {
+  justify-self: center;
+  background: #fff;
+  border-radius: var(--radius-thumb);
+  padding: var(--space-2);
+}
+
+.page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

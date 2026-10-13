@@ -1,5 +1,5 @@
 # Copy to .dev.vars for local development. Names only; never commit real values.
-# DATABASE_URL uses the runtime login user (member of ezysource_runtime), never migration credentials.
-# DATABASE_URL=
-# SUPABASE_URL=
-# SUPABASE_JWT_SECRET=
+# Runtime login user (member of ezysource_runtime), never the migration credentials.
+DATABASE_URL=
+# Supabase project URL, e.g. https://<project>.supabase.co (used to verify login tokens).
+SUPABASE_URL=

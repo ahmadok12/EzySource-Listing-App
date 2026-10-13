@@ -9,7 +9,7 @@ apps/web/          React + Vite responsive app (public, member and admin shells)
 apps/api/          Cloudflare Worker (Hono) serving /api and the built web app
 packages/domain/   Shared DTOs, error shape and roles (Zod)
 packages/db/       PostgreSQL schema, migrations and owner setup (see packages/db/README.md)
-packages/providers/ Auth, storage, AI and mail adapters (added per integration)
+packages/providers/ Login token verification and private storage adapters (AI and mail later)
 ```
 
 ## Local development
@@ -41,3 +41,12 @@ CI runs the same three commands on every pull request, with a PostgreSQL service
 - `apps/api/.dev.vars.example`: names of Worker secrets. Copy to `.dev.vars` locally; use `wrangler secret put` for deployed environments.
 
 Real values are never committed. Supabase and Cloudflare are connected in Milestone 0, step 4.
+
+## Sign-in and access
+
+- Login is email OTP through Supabase Auth. The browser SDK is used only in `apps/web/src/auth/adapter.ts`; everything else calls the app API.
+- The API verifies the Supabase access token (signature, issuer, audience, expiry) on every request, then reads the caller's suspension state and staff roles from the database. Roles are never trusted from the token, so revoking a role takes effect on the next request.
+- Owner and admin actions require two-step verification (an authenticator app). Staff who haven't set it up are taken through enrolment after their first code.
+- The first sign-in creates an app user with no roles. Make yourself owner with `pnpm db:bootstrap-owner --subject <your Supabase user id>` (see `packages/db/README.md`).
+- Private files are served only through `GET /api/media/:id/content`, which re-checks access on every request and range request. Missing and forbidden files both return 404.
+- The API uses bearer tokens only, never cookies, so cross-site requests carry no credentials.

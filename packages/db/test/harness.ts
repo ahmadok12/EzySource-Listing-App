@@ -74,5 +74,12 @@ export async function createTestDatabase(base: string) {
     throw error;
   }
 
-  return { migration, runtime: runtimeDb, superSql, drop };
+  return {
+    migration,
+    runtime: runtimeDb,
+    superSql,
+    drop,
+    /** An extra runtime connection, for concurrency tests. Caller closes it. */
+    newRuntimeDb: () => createDb(runtimeUrl, { max: 1 }).db,
+  };
 }

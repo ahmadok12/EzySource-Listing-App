@@ -11,6 +11,7 @@ import {
   Camera,
   type LucideIcon,
 } from "lucide-react";
+import type { StaffRole } from "@ezysource/domain";
 
 export type NavItem = {
   to: string;
@@ -20,6 +21,10 @@ export type NavItem = {
   milestone: number;
   /** Shown in the mobile bottom bar. At most five per shell (specs/02). */
   mobile?: boolean;
+  /** Built and safe to show in production. Unready items appear only in previews. */
+  ready?: boolean;
+  /** Staff roles that may see this item. Omit for everyone in the shell. */
+  roles?: StaffRole[];
 };
 
 export const MAX_MOBILE_NAV_ITEMS = 5;
@@ -28,7 +33,7 @@ export const memberNav: NavItem[] = [
   { to: "/directory", label: "Directory", icon: Search, milestone: 3, mobile: true },
   { to: "/saved", label: "Saved", icon: Bookmark, milestone: 3, mobile: true },
   { to: "/navigate", label: "Navigate", icon: Compass, milestone: 4, mobile: true },
-  { to: "/account", label: "Account", icon: UserRound, milestone: 3, mobile: true },
+  { to: "/account", label: "Account", icon: UserRound, milestone: 0, mobile: true, ready: true },
 ];
 
 export const adminNav: NavItem[] = [
@@ -36,7 +41,27 @@ export const adminNav: NavItem[] = [
   { to: "/admin/review", label: "Review", icon: ClipboardCheck, milestone: 2, mobile: true },
   { to: "/admin/shops", label: "Shops", icon: Store, milestone: 2, mobile: true },
   { to: "/admin/maps", label: "Maps", icon: Map, milestone: 4, mobile: true },
-  { to: "/admin/staff", label: "Staff", icon: Users, milestone: 1 },
+  {
+    to: "/admin/staff",
+    label: "Staff",
+    icon: Users,
+    milestone: 0,
+    mobile: true,
+    ready: true,
+    roles: ["owner", "admin"],
+  },
   { to: "/admin/customers", label: "Customers", icon: UserRound, milestone: 3 },
-  { to: "/admin/plans", label: "Plans", icon: LayoutGrid, milestone: 3, mobile: true },
+  { to: "/admin/plans", label: "Plans", icon: LayoutGrid, milestone: 3 },
 ];
+
+/** Items to show for this viewer: built ones, plus unfinished ones in previews. */
+export function visibleNav(
+  nav: NavItem[],
+  { previewShells, staffRoles }: { previewShells: boolean; staffRoles: StaffRole[] | null },
+) {
+  return nav.filter(
+    (item) =>
+      (item.ready || previewShells) &&
+      (!item.roles || staffRoles === null || item.roles.some((r) => staffRoles.includes(r))),
+  );
+}
