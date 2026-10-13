@@ -50,3 +50,19 @@ Real values are never committed. Supabase and Cloudflare are connected in Milest
 - The first sign-in creates an app user with no roles. Make yourself owner with `pnpm db:bootstrap-owner --subject <your Supabase user id>` (see `packages/db/README.md`).
 - Private files are served only through `GET /api/media/:id/content`, which re-checks access on every request and range request. Missing and forbidden files both return 404.
 - The API uses bearer tokens only, never cookies, so cross-site requests carry no credentials.
+
+## Collection API
+
+For collectors, and for admins and owners who have completed two-step verification.
+
+| Call | Purpose |
+| --- | --- |
+| `GET /api/collection/reference` | Districts, floors and categories |
+| `GET /api/collection/context` | The caller's access mode and open session |
+| `POST /api/collection/sessions`, `PATCH .../:id`, `POST .../:id/finish` | Start, change and finish a session |
+| `POST /api/drafts` | Save a new shop with its contacts in one step. Needs an `Idempotency-Key` header; a retry with the same key returns the same draft |
+| `GET /api/drafts`, `GET /api/drafts/:id` | The caller's open drafts |
+| `PATCH /api/drafts/:id` | Save changes. Send `expectedVersion`; a stale version returns 409 instead of overwriting |
+| `POST /api/drafts/:id/contacts`, `PATCH .../contacts/:contactId` | Add or change a contact |
+
+A collector only ever sees drafts they hold a current grant for; anything else returns 404. Database tests run with `TEST_DATABASE_URL` set (see CI).

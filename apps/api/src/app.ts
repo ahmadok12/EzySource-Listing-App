@@ -1,12 +1,13 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import type { HealthResponse } from "@ezysource/domain";
+import { DomainError, type HealthResponse } from "@ezysource/domain";
 import type { AppBindings } from "./env";
-import { ApiError, errorResponse } from "./errors";
+import { errorResponse } from "./errors";
 import { requestId } from "./middleware/request-id";
 import { securityHeaders } from "./middleware/security-headers";
 import { provideServices } from "./middleware/services";
 import { adminRoutes } from "./routes/admin";
+import { collectionRoutes } from "./routes/collection";
 import { mediaRoutes } from "./routes/media";
 import { meRoutes } from "./routes/me";
 import { createServices, type ServicesFactory } from "./services";
@@ -42,11 +43,12 @@ export function createApp({ services = createServices }: { services?: ServicesFa
   app.route("/", meRoutes);
   app.route("/", adminRoutes);
   app.route("/", mediaRoutes);
+  app.route("/", collectionRoutes);
 
   app.notFound((c) => errorResponse(c, "not_found", "Not found."));
 
   app.onError((err, c) => {
-    if (err instanceof ApiError) {
+    if (err instanceof DomainError) {
       return errorResponse(c, err.code, err.message, err.fieldErrors);
     }
     // Log only the request ID and error name; never request bodies or credentials.

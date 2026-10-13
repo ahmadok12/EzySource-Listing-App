@@ -32,6 +32,9 @@ export async function createTestDatabase(base: string) {
   const password = randomBytes(12).toString("hex");
 
   const admin = postgres(base, { max: 1, onnotice: () => {} });
+  // Roles such as ezysource_runtime are cluster-wide, so test databases set up by
+  // parallel test files or packages must not run their migrations at the same time.
+  await admin`select pg_advisory_lock(hashtext('ezysource-test-setup'))`;
   for (const role of ["anon", "authenticated"]) {
     await admin.unsafe(
       `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${role}') THEN CREATE ROLE ${role} NOLOGIN; END IF; END $$`,
@@ -73,6 +76,7 @@ export async function createTestDatabase(base: string) {
     await drop();
     throw error;
   }
+  await admin`select pg_advisory_unlock(hashtext('ezysource-test-setup'))`;
 
   return {
     migration,

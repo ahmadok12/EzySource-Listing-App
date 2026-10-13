@@ -43,3 +43,19 @@ export const apiErrorSchema = z.object({
 });
 
 export type ApiErrorBody = z.infer<typeof apiErrorSchema>;
+
+/**
+ * A safe, expected failure raised anywhere below the API. Its message is shown to
+ * the client as-is, so it must never include SQL, identifiers of other people's
+ * records, or credentials.
+ */
+export class DomainError extends Error {
+  constructor(
+    readonly code: ErrorCode,
+    message: string,
+    readonly fieldErrors?: Record<string, string[]>,
+  ) {
+    super(message);
+    this.name = "DomainError";
+  }
+}

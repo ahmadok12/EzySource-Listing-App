@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Tests also load the Node-only database test harness.
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  "include": ["src", "test"]
+}
