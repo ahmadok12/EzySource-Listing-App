@@ -17,7 +17,7 @@ PostgreSQL schema, migrations and the owner setup command. Schema source is `src
 
 | Table | Purpose |
 | --- | --- |
-| `markets`, `districts`, `floors` | Market locations. Seeded with Futian districts 1-5, floors F1-F4 (to be confirmed by the owner) |
+| `markets`, `districts`, `floors` | Market locations. Seeded with Futian districts 1-6, floors F1-F4 (to be confirmed by the owner) |
 | `categories` | Category tree. Seeded with starter top-level categories |
 | `collection_sessions` | A collector's working period and location/category defaults; one open session each |
 | `shops` | Stable supplier identity; `published_revision_id` is set only by publishing |

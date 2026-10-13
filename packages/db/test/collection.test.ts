@@ -66,7 +66,7 @@ describe.skipIf(!adminUrl)("collection (runtime role)", () => {
 
   it("serves the starter districts, floors and categories", () => {
     expect(ref.markets).toHaveLength(1);
-    expect(ref.markets[0]!.districts.map((d) => d.code)).toEqual(["D1", "D2", "D3", "D4", "D5"]);
+    expect(ref.markets[0]!.districts.map((d) => d.code)).toEqual(["D1", "D2", "D3", "D4", "D5", "D6"]);
     expect(district(0).floors.map((f) => f.label)).toEqual(["F1", "F2", "F3", "F4"]);
     expect(ref.categories.length).toBeGreaterThan(10);
   });

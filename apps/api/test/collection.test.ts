@@ -96,7 +96,7 @@ describe.skipIf(!adminUrl)("collection API", () => {
 
     const collector = await person(["collector"]);
     const ref = collectionReferenceSchema.parse(await (await collector("GET", "/collection/reference")).json());
-    expect(ref.markets[0]!.districts).toHaveLength(5);
+    expect(ref.markets[0]!.districts).toHaveLength(6);
   });
 
   it("runs a session and saves, edits and lists drafts", async () => {

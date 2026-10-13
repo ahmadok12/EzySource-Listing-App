@@ -63,7 +63,7 @@ END
 $$;
 --> statement-breakpoint
 
--- Starter locations: Futian market districts 1-5, floors F1-F4. The owner should confirm
+-- Starter locations: Futian market districts 1-6, floors F1-F4. The owner should confirm
 -- these; an admin screen for locations comes later.
 INSERT INTO app.markets (slug, name_en, name_zh)
 VALUES ('futian', 'Yiwu International Trade City (Futian)', '义乌国际商贸城（福田市场）')
@@ -71,7 +71,7 @@ ON CONFLICT (slug) DO NOTHING;
 --> statement-breakpoint
 INSERT INTO app.districts (market_id, code, name_en, name_zh, order_index)
 SELECT m.id, 'D' || n, 'District ' || n, n || '区', n
-FROM app.markets m, generate_series(1, 5) AS n
+FROM app.markets m, generate_series(1, 6) AS n
 WHERE m.slug = 'futian'
 ON CONFLICT (market_id, code) DO NOTHING;
 --> statement-breakpoint
