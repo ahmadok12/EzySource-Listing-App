@@ -17,6 +17,8 @@ export interface AuthAdapter {
   onChange(listener: (signedIn: boolean) => void): () => void;
   sendCode(email: string): Promise<void>;
   verifyCode(email: string, code: string): Promise<void>;
+  /** Staging testing only (VITE_ALLOW_PASSWORD_SIGN_IN). Production signs in with email codes. */
+  signInWithPassword?(email: string, password: string): Promise<void>;
   mfaStatus(): Promise<MfaStatus>;
   enrollMfa(): Promise<MfaEnrollment>;
   verifyMfa(factorId: string, code: string): Promise<void>;
@@ -52,6 +54,11 @@ class SupabaseAuthAdapter implements AuthAdapter {
 
   async verifyCode(email: string, code: string) {
     const { error } = await this.client.auth.verifyOtp({ email, token: code, type: "email" });
+    fail(error);
+  }
+
+  async signInWithPassword(email: string, password: string) {
+    const { error } = await this.client.auth.signInWithPassword({ email, password });
     fail(error);
   }
 

@@ -10,6 +10,11 @@ import { GlassCard } from "../components/GlassCard";
 import { TextField } from "../components/TextField";
 import "./pages.css";
 
+/** Testing builds (staging) may offer password sign-in; production never does. */
+export function passwordSignInAllowed() {
+  return import.meta.env.VITE_ALLOW_PASSWORD_SIGN_IN === "true";
+}
+
 export function LoginPage() {
   const { adapter, signedIn } = useAuth();
   const [params] = useSearchParams();
@@ -17,9 +22,10 @@ export function LoginPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "code" | "password">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,22 +63,42 @@ export function LoginPage() {
     setError(null);
     try {
       await adapter!.verifyCode(email.trim(), code.trim());
-      const me = await queryClient.fetchQuery({
-        queryKey: ["me"],
-        queryFn: () => apiGet("/me", meResponseSchema.parse),
-      });
-      const destination = next ?? (me.staffRoles.length > 0 ? "/admin" : "/account");
-      if (me.mfaRequired) {
-        navigate(`/login/mfa?next=${encodeURIComponent(destination)}`, { replace: true });
-      } else {
-        navigate(destination, { replace: true });
-      }
+      await finish();
     } catch {
       setError("That code didn't work. Check it, or send a new one.");
     } finally {
       setBusy(false);
     }
   }
+
+  async function signInWithPassword(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await adapter!.signInWithPassword!(email.trim(), password);
+      await finish();
+    } catch {
+      setError("That email and password didn't work.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function finish() {
+    const me = await queryClient.fetchQuery({
+      queryKey: ["me"],
+      queryFn: () => apiGet("/me", meResponseSchema.parse),
+    });
+    const destination = next ?? (me.staffRoles.length > 0 ? "/admin" : "/account");
+    if (me.mfaRequired) {
+      navigate(`/login/mfa?next=${encodeURIComponent(destination)}`, { replace: true });
+    } else {
+      navigate(destination, { replace: true });
+    }
+  }
+
+  const canUsePassword = passwordSignInAllowed() && !!adapter.signInWithPassword;
 
   return (
     <section className="page page--narrow">
@@ -91,6 +117,51 @@ export function LoginPage() {
           {error ? <p className="page__error" role="alert">{error}</p> : null}
           <Button type="submit" disabled={busy}>
             {busy ? "Sending…" : "Email me a code"}
+          </Button>
+          {canUsePassword ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setStep("password");
+                setError(null);
+              }}
+            >
+              Use a password (testing only)
+            </Button>
+          ) : null}
+        </form>
+      ) : step === "password" ? (
+        <form className="page__form glass" onSubmit={signInWithPassword}>
+          <p className="page__meta">Password sign-in is only on the testing site.</p>
+          <TextField
+            label="Email"
+            type="email"
+            autoComplete="username"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error ? <p className="page__error" role="alert">{error}</p> : null}
+          <Button type="submit" disabled={busy}>
+            {busy ? "Signing in…" : "Sign in"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setStep("email");
+              setPassword("");
+              setError(null);
+            }}
+          >
+            Use an email code instead
           </Button>
         </form>
       ) : (

@@ -24,6 +24,9 @@ jobs:
       # Public values only: these are bundled into the browser by design.
       VITE_SUPABASE_URL: https://gmgyqrvwknmcditcaekl.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_qnyCfTE4EDSfw9lfrcxN3Q_3suyjvVM
+      # Staging only: lets testers sign in with a password while login email is being set up.
+      # Production builds leave this out and use email codes.
+      VITE_ALLOW_PASSWORD_SIGN_IN: "true"
     steps:
       - name: Check Cloudflare credentials
         id: creds
