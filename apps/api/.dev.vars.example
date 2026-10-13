@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local development. Names only; never commit real values.
+# Added as each integration lands (Milestone 0 steps 2 to 4).
+# DATABASE_URL=
+# SUPABASE_URL=
+# SUPABASE_JWT_SECRET=

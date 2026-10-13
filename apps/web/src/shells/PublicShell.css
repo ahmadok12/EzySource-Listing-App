@@ -1,0 +1,14 @@
+.public__bar {
+  display: flex;
+  align-items: center;
+  height: var(--app-bar-height);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.public__main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-4);
+}

@@ -1,0 +1,18 @@
+{
+  // One Worker serves the built web app and the /api routes on the same origin (specs/08).
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ezysource",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    "APP_ENV": "local",
+    "APP_VERSION": "0.0.0"
+  }
+  // Secrets (database URL, auth keys, AI keys) are set with `wrangler secret put`
+  // or a local .dev.vars file. Names are listed in .dev.vars.example. Never commit values.
+}

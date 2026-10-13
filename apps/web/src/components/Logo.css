@@ -1,0 +1,33 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logo__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--accent-grad);
+  box-shadow: var(--accent-shadow);
+  color: #fff;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.logo__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo__name {
+  font: var(--text-row-title);
+  font-size: 16px;
+}
+
+.logo__subtitle {
+  font: var(--text-meta);
+  color: var(--neutral-700);
+}

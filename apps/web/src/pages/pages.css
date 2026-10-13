@@ -1,0 +1,40 @@
+.page {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-1);
+}
+
+.page__kicker {
+  font: var(--text-label);
+  color: var(--accent-700);
+}
+
+.page__display {
+  font: var(--text-display);
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+}
+
+.page__title {
+  font: var(--text-screen-title);
+}
+
+.page__lede {
+  max-width: 60ch;
+  color: var(--neutral-800);
+}
+
+.page__notice {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 480px;
+}
+
+.page__row-title {
+  font: var(--text-row-title);
+}
+
+.page__meta {
+  font: var(--text-meta);
+  color: var(--neutral-700);
+}

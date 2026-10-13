@@ -1,0 +1,117 @@
+.shell {
+  min-height: 100dvh;
+}
+
+.shell__bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  height: var(--app-bar-height);
+  padding: 0 var(--space-4);
+  padding-top: env(safe-area-inset-top);
+}
+
+.shell__main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--space-6) + env(safe-area-inset-bottom));
+}
+
+.shell__side {
+  display: none;
+}
+
+.shell__bottom {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  justify-content: space-around;
+  gap: var(--space-1);
+  height: var(--bottom-nav-height);
+  padding: var(--space-1);
+  border-radius: 26px;
+}
+
+.shell__bottom-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: var(--hit-target);
+  border-radius: 22px;
+  color: var(--neutral-700);
+  font: var(--text-meta);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.shell__bottom-link.active {
+  background: #fff;
+  color: var(--accent-700);
+}
+
+.shell__side ul {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.shell__side-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--hit-target);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-input);
+  color: var(--neutral-800);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.shell__side-link:hover {
+  background: var(--glass-hover);
+}
+
+.shell__side-link.active {
+  background: #fff;
+  color: var(--accent-700);
+}
+
+/* Desktop: wide, compact layout with persistent side navigation. */
+@media (min-width: 900px) {
+  .shell {
+    display: grid;
+    grid-template-columns: var(--side-nav-width) 1fr;
+  }
+
+  .shell__bar,
+  .shell__bottom {
+    display: none;
+  }
+
+  .shell__side {
+    display: block;
+    position: sticky;
+    top: var(--space-3);
+    height: calc(100dvh - var(--space-5));
+    margin: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius-card);
+    overflow-y: auto;
+  }
+
+  .shell__main {
+    width: 100%;
+    padding: var(--space-5) var(--space-5) var(--space-6);
+  }
+}
