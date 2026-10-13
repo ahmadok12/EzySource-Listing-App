@@ -40,7 +40,7 @@ CI runs the same three commands on every pull request, with a PostgreSQL service
 - `apps/web/.env.example`: public build-time flags only. Anything prefixed `VITE_` ships to the browser, so it must never hold a secret.
 - `apps/api/.dev.vars.example`: names of Worker secrets. Copy to `.dev.vars` locally; use `wrangler secret put` for deployed environments.
 
-Real values are never committed. Supabase and Cloudflare are connected in Milestone 0, step 4.
+Real values are never committed. Staging deployment and the one-time Supabase/Cloudflare setup are in [`docs/deploy.md`](docs/deploy.md).
 
 ## Sign-in and access
 
