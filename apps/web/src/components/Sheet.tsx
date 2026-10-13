@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import "./Sheet.css";
 
 type Props = {
@@ -22,7 +23,8 @@ export function Sheet({ title, children, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // Rendered at the end of the page so it always sits above the app bar and bottom navigation.
+  return createPortal(
     <div className="sheet__scrim">
       <div ref={ref} className="sheet glass" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <h2 id={titleId} className="page__row-title">
@@ -30,6 +32,7 @@ export function Sheet({ title, children, onClose }: Props) {
         </h2>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -17,6 +17,9 @@
   border-radius: var(--radius-sheet);
   display: grid;
   gap: var(--space-3);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   outline: none;
 }
 

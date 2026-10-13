@@ -33,42 +33,68 @@ export function apiSend<T>(
   parse: (data: unknown) => T,
   headers: Record<string, string> = {},
 ): Promise<T> {
-  return apiRequest(method, path, parse, body, headers);
+  return apiRequest(method, path, parse, body === undefined ? undefined : JSON.stringify(body), {
+    "content-type": "application/json",
+    ...headers,
+  });
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  await apiRequest("DELETE", path, () => undefined);
+}
+
+/** Sends a file's bytes. The browser sets Content-Length from the blob. */
+export function apiPutFile<T>(path: string, file: Blob, contentType: string, parse: (data: unknown) => T) {
+  return apiRequest("PUT", path, parse, file, { "content-type": contentType });
+}
+
+/**
+ * Downloads a private file with the signed-in person's token. Images and audio can't
+ * send that header themselves, so screens show the result as a local object URL.
+ */
+export async function apiGetFile(path: string): Promise<Blob> {
+  const res = await send("GET", path, undefined, {});
+  if (!res.ok) await fail(res);
+  return res.blob();
+}
+
+async function send(method: string, path: string, body: BodyInit | undefined, headers: Record<string, string>) {
+  const token = await tokenProvider();
+  try {
+    return await fetch(`/api${path}`, {
+      method,
+      headers: {
+        accept: "application/json",
+        ...headers,
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      ...(body === undefined ? {} : { body }),
+      credentials: "omit",
+    });
+  } catch {
+    throw new ApiRequestError(0, "network", "Can't reach EzySource. Check your connection.");
+  }
+}
+
+async function fail(res: Response, data?: unknown): Promise<never> {
+  const body = data === undefined ? await res.json().catch(() => undefined) : data;
+  const parsed = apiErrorSchema.safeParse(body);
+  if (parsed.success) {
+    const { code, message, requestId, fieldErrors } = parsed.data.error;
+    throw new ApiRequestError(res.status, code, message, requestId, fieldErrors);
+  }
+  throw new ApiRequestError(res.status, "internal", "Unexpected response from the server.");
 }
 
 async function apiRequest<T>(
   method: string,
   path: string,
   parse: (data: unknown) => T,
-  body?: unknown,
+  body?: BodyInit,
   headers: Record<string, string> = {},
 ): Promise<T> {
-  const token = await tokenProvider();
-  let res: Response;
-  try {
-    res = await fetch(`/api${path}`, {
-      method,
-      headers: {
-        accept: "application/json",
-        ...(body === undefined ? {} : { "content-type": "application/json" }),
-        ...headers,
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      credentials: "omit",
-    });
-  } catch {
-    throw new ApiRequestError(0, "network", "Can't reach EzySource. Check your connection.");
-  }
-
+  const res = await send(method, path, body, headers);
   const data: unknown = await res.json().catch(() => undefined);
-  if (!res.ok) {
-    const parsed = apiErrorSchema.safeParse(data);
-    if (parsed.success) {
-      const { code, message, requestId, fieldErrors } = parsed.data.error;
-      throw new ApiRequestError(res.status, code, message, requestId, fieldErrors);
-    }
-    throw new ApiRequestError(res.status, "internal", "Unexpected response from the server.");
-  }
+  if (!res.ok) await fail(res, data ?? null);
   return parse(data);
 }

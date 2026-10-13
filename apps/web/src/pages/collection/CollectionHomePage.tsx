@@ -10,6 +10,8 @@ import { categoryName, locationLabel } from "../../collection/form";
 import { formatTime } from "../../collection/format";
 import { localDrafts } from "../../collection/localDrafts";
 import { useCollectionContext, useDrafts, useReference, useSessionActions } from "../../collection/queries";
+import { UploadNotice } from "../../collection/media";
+import { useUploadQueue } from "../../collection/uploads";
 import { useCollectorId } from "../../collection/useCollectorId";
 import "../pages.css";
 import "./collection.css";
@@ -54,10 +56,17 @@ export function CollectionHomePage() {
         <StartSession reference={reference.data} />
       )}
       <p className="page__meta">{MODE_NOTES[context.data.policy.mode]}</p>
+      <PendingUploads />
       <UnsentShops reference={reference.data} />
       <SavedShops reference={reference.data} />
     </section>
   );
+}
+
+/** Files from any shop still on this phone. Opening Collection also resumes sending them. */
+function PendingUploads() {
+  const queue = useUploadQueue(useCollectorId());
+  return <UploadNotice queue={queue} />;
 }
 
 function StartSession({ reference }: { reference: CollectionReference }) {
