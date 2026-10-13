@@ -1,6 +1,12 @@
 import {
   addDraftContact,
   createDb,
+  createUploadIntent,
+  finishUpload,
+  getMediaForCollector,
+  getUploadTarget,
+  removeDraftMedia,
+  updateDraftMedia,
   createDraft,
   finishCollectionSession,
   getActiveStaffRoles,
@@ -61,6 +67,13 @@ export type CollectionService = {
   updateDraft: WithoutDb<typeof updateDraft>;
   addContact: WithoutDb<typeof addDraftContact>;
   updateContact: WithoutDb<typeof updateDraftContact>;
+  uploadIntent: WithoutDb<typeof createUploadIntent>;
+  uploadTarget: WithoutDb<typeof getUploadTarget>;
+  finishUpload: WithoutDb<typeof finishUpload>;
+  updateMedia: WithoutDb<typeof updateDraftMedia>;
+  removeMedia: WithoutDb<typeof removeDraftMedia>;
+  /** A file a collector may open right now, or null. */
+  readableMedia: WithoutDb<typeof getMediaForCollector>;
 };
 
 export function createCollectionService(db: Database): CollectionService {
@@ -76,6 +89,12 @@ export function createCollectionService(db: Database): CollectionService {
     updateDraft: (...a) => updateDraft(db, ...a),
     addContact: (...a) => addDraftContact(db, ...a),
     updateContact: (...a) => updateDraftContact(db, ...a),
+    uploadIntent: (...a) => createUploadIntent(db, ...a),
+    uploadTarget: (...a) => getUploadTarget(db, ...a),
+    finishUpload: (...a) => finishUpload(db, ...a),
+    updateMedia: (...a) => updateDraftMedia(db, ...a),
+    removeMedia: (...a) => removeDraftMedia(db, ...a),
+    readableMedia: (...a) => getMediaForCollector(db, ...a),
   };
 }
 

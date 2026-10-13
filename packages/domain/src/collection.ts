@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { draftMediaSchema } from "./media";
 
 /**
  * Shop collection contracts (specs/04 "Initial review fields", specs/08 API table).
@@ -144,6 +145,8 @@ export const draftSchema = z.object({
     }),
   ),
   sharedChannels: z.array(channelSchema),
+  /** Photos, PDFs and voice notes, in display order within each purpose. */
+  media: z.array(draftMediaSchema),
   sessionId: z.uuid().nullable(),
   collectorId: z.uuid(),
   createdAt: z.iso.datetime({ offset: true }),

@@ -2,7 +2,7 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type CryptoKey 
 import type { StaffRole } from "@ezysource/domain";
 import type { AppUser, MediaAssetRecord } from "@ezysource/db";
 import { MemoryObjectStore, SupabaseTokenVerifier } from "@ezysource/providers";
-import type { Services } from "../src/services";
+import type { CollectionService, Services } from "../src/services";
 
 export const SUPABASE_URL = "https://test-project.supabase.co";
 
@@ -31,6 +31,8 @@ export class FakeWorld {
   roles = new Map<string, StaffRole[]>();
   media = new Map<string, MediaAssetRecord>();
   store = new MemoryObjectStore();
+  /** Media ID -> collectors who can currently open it through a draft. */
+  readable = new Map<string, Set<string>>();
   private next = 1;
 
   userFor(subject: string) {
@@ -55,7 +57,11 @@ export class FakeWorld {
             .map((u) => ({ ...u, roles: this.roles.get(u.id)! })),
       },
       media: { get: async (id) => this.media.get(id) ?? null },
-      collection: null,
+      // Only what the media route needs; collection routes are tested against PostgreSQL.
+      collection: {
+        readableMedia: async (actor, id) =>
+          this.readable.get(id)?.has(actor.userId) ? (this.media.get(id) ?? null) : null,
+      } as Partial<CollectionService> as CollectionService,
       store: this.store,
       close: async () => {},
     };

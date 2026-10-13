@@ -13,6 +13,8 @@
   },
   // Private media bucket; the API is its only reader (specs/08).
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }],
+  // Daily cleanup of uploads that never finished (src/index.ts).
+  "triggers": { "crons": ["17 19 * * *"] },
   // Local development. Put DATABASE_URL and SUPABASE_URL in .dev.vars (see .dev.vars.example).
   "vars": {
     "APP_ENV": "local",

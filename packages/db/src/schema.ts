@@ -162,7 +162,7 @@ export const mediaAssets = app.table(
     check("media_assets_kind_check", sql`${t.kind} in ('image', 'audio', 'pdf')`),
     check(
       "media_assets_state_check",
-      sql`${t.state} in ('staged', 'uploaded', 'validated', 'rejected')`,
+      sql`${t.state} in ('staged', 'uploaded', 'validated', 'rejected', 'removed')`,
     ),
     check("media_assets_size_check", sql`${t.sizeBytes} > 0`),
   ],
@@ -471,5 +471,53 @@ export const collectorPolicies = app.table(
       "collector_policies_duration_check",
       sql`${t.grantDurationMinutes} is null or ${t.grantDurationMinutes} > 0`,
     ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Shop media (specs/03 media_links, specs/04 "Media collection" and "Upload protocol").
+
+/**
+ * Where an uploaded file belongs on a revision. Created when the upload is requested,
+ * so the target is fixed by the server before any bytes arrive (specs/09 COLL-08);
+ * the file only shows on the shop once its asset is validated.
+ */
+export const mediaLinks = app.table(
+  "media_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    revisionId: uuid("revision_id")
+      .notNull()
+      .references(() => shopRevisions.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => mediaAssets.id, { onDelete: "restrict" }),
+    purpose: varchar("purpose", { length: 20 }).notNull(),
+    /** Set for business cards and chat QR codes that belong to one person. */
+    contactId: uuid("contact_id"),
+    /** Caption for a sign photo, or the title of a voice note. */
+    caption: varchar("caption", { length: 200 }),
+    visibility: varchar("visibility", { length: 16 }).notNull(),
+    orderIndex: integer("order_index").notNull().default(0),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "restrict" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("media_links_revision_media_key").on(t.revisionId, t.mediaId),
+    index("media_links_revision_idx").on(t.revisionId, t.purpose, t.orderIndex),
+    index("media_links_media_idx").on(t.mediaId),
+    check(
+      "media_links_purpose_check",
+      sql`${t.purpose} in ('sign', 'overview', 'section', 'voice', 'card_front', 'card_back', 'wechat_qr', 'whatsapp_qr')`,
+    ),
+    check("media_links_visibility_check", sql`${t.visibility} in ('subscriber', 'staff', 'internal')`),
+    // A person's card or QR must belong to a contact on the same revision.
+    foreignKey({
+      name: "media_links_revision_contact_fk",
+      columns: [t.revisionId, t.contactId],
+      foreignColumns: [revisionContacts.revisionId, revisionContacts.contactId],
+    }).onDelete("cascade"),
   ],
 );

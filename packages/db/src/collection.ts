@@ -18,6 +18,8 @@ import {
   type UpdateDraftInput,
 } from "@ezysource/domain";
 import type { Database } from "./client";
+import { accessible, isReviewer, notFound, type CollectionActor, type Queryable, type Tx } from "./access";
+import { loadDraftMedia } from "./media";
 import {
   auditEvents,
   categories,
@@ -47,23 +49,15 @@ import {
  * not found, so responses never confirm that someone else's record exists.
  */
 
-export type CollectionActor = { userId: string; roles: readonly StaffRole[]; requestId?: string };
-
-type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
-type Queryable = Database | Tx;
-
-const EDITABLE_STATES: RevisionState[] = ["draft", "returned"];
 const IDEMPOTENCY_TTL = sql`now() + interval '24 hours'`;
 const DEFAULT_MODE: CollectorMode = "review_then_submit";
 
-const isReviewer = (actor: CollectionActor) =>
-  actor.roles.includes("owner") || actor.roles.includes("admin");
-
-const notFound = () => new DomainError("not_found", "Not found.");
 const invalid = (field: string, message: string) =>
   new DomainError("validation_failed", message, { [field]: [message] });
 
 // Reference data -----------------------------------------------------------------
+
+export type { CollectionActor } from "./access";
 
 export async function getCollectionReference(db: Queryable): Promise<CollectionReference> {
   const [marketRows, districtRows, floorRows, categoryRows] = await Promise.all([
@@ -326,31 +320,6 @@ export async function finishCollectionSession(
 
 // Access ------------------------------------------------------------------------
 
-/** SQL true when `actor` may currently work on the revision in the outer query. */
-function accessible(actor: CollectionActor): SQL {
-  const editable = inArray(shopRevisions.state, EDITABLE_STATES);
-  if (isReviewer(actor)) return editable;
-  return and(
-    editable,
-    sql`exists (
-      select 1 from ${recordGrants} g
-      where g.revision_id = ${shopRevisions.id}
-        and g.user_id = ${actor.userId}
-        and g.revoked_at is null
-        and (g.expires_at is null or g.expires_at > now())
-        and (
-          g.policy_mode <> 'immediate_handoff'
-          or exists (
-            select 1 from ${collectionSessions} s
-            where s.id = ${shopRevisions.sessionId}
-              and s.collector_id = ${actor.userId}
-              and s.finished_at is null
-          )
-        )
-    )`,
-  )!;
-}
-
 /** Locks an accessible revision for a change and checks the caller's expected version. */
 async function lockForEdit(tx: Tx, actor: CollectionActor, revisionId: string, expectedVersion: number) {
   const [row] = await tx
@@ -402,7 +371,7 @@ async function loadDraft(db: Queryable, actor: CollectionActor, revisionId: stri
     .where(and(eq(shopRevisions.id, revisionId), accessible(actor)));
   if (!revision) return null;
 
-  const [categoryRows, keywordRows, contactRows, channelRows] = await Promise.all([
+  const [categoryRows, keywordRows, contactRows, channelRows, media] = await Promise.all([
     db
       .select({ id: revisionCategories.categoryId, isPrimary: revisionCategories.isPrimary })
       .from(revisionCategories)
@@ -434,6 +403,7 @@ async function loadDraft(db: Queryable, actor: CollectionActor, revisionId: stri
       .from(contactChannels)
       .where(eq(contactChannels.revisionId, revisionId))
       .orderBy(asc(contactChannels.orderIndex), asc(contactChannels.createdAt)),
+    loadDraftMedia(db, revisionId),
   ]);
 
   const channelsFor = (contactId: string | null) =>
@@ -448,6 +418,7 @@ async function loadDraft(db: Queryable, actor: CollectionActor, revisionId: stri
     keywords: keywordRows,
     contacts: contactRows.map((c) => ({ ...c, channels: channelsFor(c.id) })),
     sharedChannels: channelsFor(null),
+    media,
     createdAt: revision.createdAt.toISOString(),
     updatedAt: revision.updatedAt.toISOString(),
   };

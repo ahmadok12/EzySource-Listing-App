@@ -16,7 +16,7 @@ const SERVABLE_TYPES = new Set([
   "application/pdf",
 ]);
 
-const SERVABLE_STATES = new Set(["uploaded", "validated"]);
+const SERVABLE_STATES = new Set(["validated"]);
 
 const notFound = () => new ApiError("not_found", "Not found.");
 
@@ -46,7 +46,7 @@ export function parseRange(header: string | undefined, size: number) {
  * Unauthorised and missing look the same (non-disclosing 404).
  */
 export const mediaRoutes = new Hono<AppBindings>().get("/media/:id/content", authenticate, async (c) => {
-  const { media, store } = c.get("services");
+  const { media, store, collection } = c.get("services");
   if (!media || !store) {
     throw new ApiError("upstream_unavailable", "File storage isn't configured on this server yet.");
   }
@@ -54,19 +54,25 @@ export const mediaRoutes = new Hono<AppBindings>().get("/media/:id/content", aut
   const id = z.uuid().safeParse(c.req.param("id"));
   if (!id.success) throw notFound();
 
-  const asset = await media.get(id.data);
-  if (!asset || !SERVABLE_STATES.has(asset.state) || !SERVABLE_TYPES.has(asset.mimeType)) {
-    throw notFound();
-  }
-
+  // Owners and admins (after two-step verification) may open any file. Collectors may
+  // open a file only while it is on a draft they can still work on; that is checked
+  // again on every request, including each range request.
   const actor = c.get("actor");
-  const isUploader = asset.uploaderId === actor.user.id;
-  const staffAdmin = actor.staffRoles.filter((r) => r === "owner" || r === "admin");
-  if (!isUploader) {
-    if (staffAdmin.length === 0) throw notFound();
-    if (needsMfa(staffAdmin, actor.assuranceLevel)) {
+  const reviewerRoles = actor.staffRoles.filter((r) => r === "owner" || r === "admin");
+  let asset: { objectKey: string; mimeType: string; sizeBytes: number; state: string } | null = null;
+  if (reviewerRoles.length > 0) {
+    if (needsMfa(reviewerRoles, actor.assuranceLevel)) {
       throw new ApiError("mfa_required", "Complete two-step verification to continue.");
     }
+    asset = await media.get(id.data);
+  } else if (actor.staffRoles.includes("collector") && collection) {
+    asset = await collection.readableMedia(
+      { userId: actor.user.id, roles: actor.staffRoles, requestId: c.get("requestId") },
+      id.data,
+    );
+  }
+  if (!asset || !SERVABLE_STATES.has(asset.state) || !SERVABLE_TYPES.has(asset.mimeType)) {
+    throw notFound();
   }
 
   const range = parseRange(c.req.header("range"), asset.sizeBytes);

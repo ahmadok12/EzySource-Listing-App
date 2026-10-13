@@ -10,6 +10,7 @@ import { adminRoutes } from "./routes/admin";
 import { collectionRoutes } from "./routes/collection";
 import { mediaRoutes } from "./routes/media";
 import { meRoutes } from "./routes/me";
+import { MAX_UPLOAD_BYTES, UPLOAD_CONTENT_PATH, uploadRoutes } from "./routes/uploads";
 import { createServices, type ServicesFactory } from "./services";
 
 /** Initial default JSON body cap. File bytes go to staged uploads, not the API body. */
@@ -20,12 +21,17 @@ export function createApp({ services = createServices }: { services?: ServicesFa
 
   app.use("*", requestId);
   app.use("*", securityHeaders);
-  app.use(
-    "*",
-    bodyLimit({
-      maxSize: MAX_JSON_BODY_BYTES,
-      onError: (c) => errorResponse(c, "payload_too_large", "Request body is too large."),
-    }),
+  const jsonLimit = bodyLimit({
+    maxSize: MAX_JSON_BODY_BYTES,
+    onError: (c) => errorResponse(c, "payload_too_large", "Request body is too large."),
+  });
+  const fileLimit = bodyLimit({
+    maxSize: MAX_UPLOAD_BYTES,
+    onError: (c) => errorResponse(c, "payload_too_large", "This file is too big."),
+  });
+  // File bytes go only to the upload route, which checks them against the staged upload.
+  app.use("*", (c, next) =>
+    c.req.method === "PUT" && UPLOAD_CONTENT_PATH.test(c.req.path) ? fileLimit(c, next) : jsonLimit(c, next),
   );
 
   app.use("*", provideServices(services));
@@ -44,6 +50,7 @@ export function createApp({ services = createServices }: { services?: ServicesFa
   app.route("/", adminRoutes);
   app.route("/", mediaRoutes);
   app.route("/", collectionRoutes);
+  app.route("/", uploadRoutes);
 
   app.notFound((c) => errorResponse(c, "not_found", "Not found."));
 

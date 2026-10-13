@@ -1,5 +1,4 @@
-import { Hono, type Context } from "hono";
-import { z } from "zod";
+import { Hono } from "hono";
 import {
   addContactSchema,
   createDraftSchema,
@@ -8,69 +7,22 @@ import {
   sessionDefaultsSchema,
   updateContactSchema,
   updateDraftSchema,
+  updateMediaSchema,
   type CollectionContext,
   type CollectionReference,
   type DraftListResponse,
   type DraftResponse,
   type SessionResponse,
+  type UploadResponse,
 } from "@ezysource/domain";
 import type { AppBindings } from "../env";
 import { ApiError } from "../errors";
-import { authenticate, requireStaff } from "../middleware/auth";
-import type { CollectionService } from "../services";
+import { actor, body, collection, id, invalid, staffOnly } from "./helpers";
 
 /**
  * Shop collection API (specs/08 API table). Collectors, admins and owners only;
  * which records a collector can open is decided per request from their grants.
  */
-
-type C = Context<AppBindings>;
-
-function collection(c: C): CollectionService {
-  const service = c.get("services").collection;
-  if (!service) throw new ApiError("upstream_unavailable", "The database isn't configured on this server yet.");
-  return service;
-}
-
-function actor(c: C) {
-  const { user, staffRoles } = c.get("actor");
-  return { userId: user.id, roles: staffRoles, requestId: c.get("requestId") };
-}
-
-function toFieldErrors(error: z.ZodError) {
-  const fieldErrors: Record<string, string[]> = {};
-  for (const issue of error.issues) {
-    const field = issue.path.length > 0 ? issue.path.join(".") : "_form";
-    (fieldErrors[field] ??= []).push(issue.message);
-  }
-  return fieldErrors;
-}
-
-function invalid(error: z.ZodError) {
-  const fieldErrors = toFieldErrors(error);
-  return new ApiError("validation_failed", fieldErrors._form?.[0] ?? "Check the highlighted fields.", fieldErrors);
-}
-
-async function body<S extends z.ZodType>(c: C, schema: S): Promise<z.output<S>> {
-  let json: unknown;
-  try {
-    json = await c.req.json();
-  } catch {
-    throw new ApiError("validation_failed", "Send a JSON body.");
-  }
-  const parsed = schema.safeParse(json);
-  if (!parsed.success) throw invalid(parsed.error);
-  return parsed.data;
-}
-
-/** Path IDs that aren't UUIDs can't name a record, so they get the same 404. */
-function id(c: C, name: string) {
-  const parsed = z.uuid().safeParse(c.req.param(name));
-  if (!parsed.success) throw new ApiError("not_found", "Not found.");
-  return parsed.data;
-}
-
-const staffOnly = [authenticate, requireStaff("collector", "admin", "owner")] as const;
 
 export const collectionRoutes = new Hono<AppBindings>()
   .use("/collection/*", ...staffOnly)
@@ -147,4 +99,20 @@ export const collectionRoutes = new Hono<AppBindings>()
       draft: await collection(c).updateContact(actor(c), id(c, "id"), id(c, "contactId"), input),
     };
     return c.json(res);
+  })
+
+  .patch("/drafts/:id/media/:mediaId", async (c) => {
+    const input = await body(c, updateMediaSchema);
+    const res: UploadResponse = {
+      media: await collection(c).updateMedia(actor(c), id(c, "id"), id(c, "mediaId"), input),
+    };
+    return c.json(res);
+  })
+
+  .delete("/drafts/:id/media/:mediaId", async (c) => {
+    const { objectKey } = await collection(c).removeMedia(actor(c), id(c, "id"), id(c, "mediaId"));
+    // The record is already marked removed; a leftover object is harmless and private.
+    const store = c.get("services").store;
+    if (objectKey && store) await store.delete(objectKey).catch(() => {});
+    return c.body(null, 204);
   });
