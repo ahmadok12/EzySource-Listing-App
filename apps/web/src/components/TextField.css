@@ -1,0 +1,26 @@
+.field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.field__label {
+  font: var(--text-label);
+}
+
+.field__input {
+  height: var(--hit-target);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.field__input:focus-visible {
+  outline: 2px solid var(--accent-600);
+  outline-offset: 1px;
+}
+
+.field__hint {
+  font: var(--text-meta);
+  color: var(--neutral-700);
+}

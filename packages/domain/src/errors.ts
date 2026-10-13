@@ -7,6 +7,7 @@ import { z } from "zod";
 export const errorCodes = [
   "unauthenticated",
   "forbidden",
+  "mfa_required",
   "not_found",
   "conflict",
   "validation_failed",
@@ -21,6 +22,7 @@ export type ErrorCode = (typeof errorCodes)[number];
 export const errorStatus: Record<ErrorCode, number> = {
   unauthenticated: 401,
   forbidden: 403,
+  mfa_required: 403,
   not_found: 404,
   conflict: 409,
   validation_failed: 422,

@@ -13,13 +13,24 @@ export class ApiRequestError extends Error {
   }
 }
 
+let tokenProvider: () => Promise<string | null> = async () => null;
+
+/** Called once by the auth provider so API calls carry the current access token. */
+export function setApiTokenProvider(provider: () => Promise<string | null>) {
+  tokenProvider = provider;
+}
+
 /** All UI data access goes through the app API, never directly to the database (specs/08). */
 export async function apiGet<T>(path: string, parse: (data: unknown) => T): Promise<T> {
+  const token = await tokenProvider();
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
-      headers: { accept: "application/json" },
-      credentials: "same-origin",
+      headers: {
+        accept: "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "omit",
     });
   } catch {
     throw new ApiRequestError(0, "network", "Can't reach EzySource. Check your connection.");

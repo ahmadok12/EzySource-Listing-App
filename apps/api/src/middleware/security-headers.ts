@@ -7,6 +7,8 @@ export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => 
   c.header("Cache-Control", "private, no-store");
   c.header("X-Content-Type-Options", "nosniff");
   c.header("Referrer-Policy", "no-referrer");
-  c.header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+  if (!c.res.headers.has("Content-Security-Policy")) {
+    c.header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+  }
   c.header("X-Frame-Options", "DENY");
 });
