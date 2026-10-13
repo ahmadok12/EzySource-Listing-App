@@ -1,5 +1,5 @@
 # Copy to .dev.vars for local development. Names only; never commit real values.
-# Added as each integration lands (Milestone 0 steps 2 to 4).
+# DATABASE_URL uses the runtime login user (member of ezysource_runtime), never migration credentials.
 # DATABASE_URL=
 # SUPABASE_URL=
 # SUPABASE_JWT_SECRET=

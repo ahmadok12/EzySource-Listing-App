@@ -12,7 +12,9 @@
     "dev:api": "pnpm --filter @ezysource/api dev",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "build": "pnpm --filter @ezysource/web build && pnpm --filter @ezysource/api build"
+    "build": "pnpm --filter @ezysource/web build && pnpm --filter @ezysource/api build",
+    "db:migrate": "pnpm --filter @ezysource/db migrate",
+    "db:bootstrap-owner": "pnpm --filter @ezysource/db bootstrap-owner"
   },
   "devDependencies": {
     "typescript": "7.0.2",

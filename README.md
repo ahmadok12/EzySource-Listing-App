@@ -8,7 +8,7 @@ Subscription supplier directory for Yiwu's Futian wholesale market. The build sp
 apps/web/          React + Vite responsive app (public, member and admin shells)
 apps/api/          Cloudflare Worker (Hono) serving /api and the built web app
 packages/domain/   Shared DTOs, error shape and roles (Zod)
-packages/db/       PostgreSQL schema and migrations (Milestone 0, step 2)
+packages/db/       PostgreSQL schema, migrations and owner setup (see packages/db/README.md)
 packages/providers/ Auth, storage, AI and mail adapters (added per integration)
 ```
 
@@ -33,7 +33,7 @@ pnpm test
 pnpm build        # builds the web app, then dry-runs the Worker bundle with it
 ```
 
-CI runs the same three commands on every pull request.
+CI runs the same three commands on every pull request, with a PostgreSQL service so the database security tests always run. Locally they need `TEST_DATABASE_URL`; see `packages/db/README.md`.
 
 ## Configuration and secrets
 
