@@ -53,6 +53,19 @@ function mockApi(me: MeResponse | null) {
   );
 }
 
+/** The server is up but can't load accounts (e.g. its database is unreachable). */
+function mockServerDown() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json(
+        { error: { code: "unavailable", message: "Service unavailable.", requestId: "r" } },
+        { status: 503 },
+      ),
+    ),
+  );
+}
+
 function me(staffRoles: MeResponse["staffRoles"], mfaRequired = false): MeResponse {
   return {
     user: { id: USER_ID, displayName: "Ahmad" },
@@ -145,6 +158,19 @@ describe("sign-in flow", () => {
     vi.unstubAllEnvs();
   });
 
+  it("undoes a sign-in when the account can't be loaded, instead of blaming the password", async () => {
+    mockServerDown();
+    const adapter = fakeAdapter(false);
+    const router = renderAt("/login", { adapter });
+    fireEvent.change(await screen.findByLabelText("Email"), { target: { value: "test@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Email me a code" }));
+    fireEvent.change(await screen.findByLabelText("Code"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByText(/Your sign-in worked, but we couldn't load your account/)).toBeTruthy();
+    expect(await adapter.getAccessToken()).toBeNull();
+    expect(router.state.location.pathname).toBe("/login");
+  });
+
   it("ignores off-site post-login destinations", () => {
     expect(safeNext("/admin/staff")).toBe("/admin/staff");
     expect(safeNext("//evil.example")).toBeNull();
@@ -159,6 +185,16 @@ describe("guards", () => {
     const router = renderAt("/admin/staff", { adapter: fakeAdapter(false) });
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
     expect(router.state.location.search).toBe(`?next=${encodeURIComponent("/admin/staff")}`);
+  });
+
+  it("offer a way out when the account can't be loaded", async () => {
+    mockServerDown();
+    const adapter = fakeAdapter(true);
+    const router = renderAt("/admin/collection", { adapter });
+    expect(await screen.findByText("Something went wrong")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+    expect(await adapter.getAccessToken()).toBeNull();
   });
 
   it("keep members out of admin", async () => {

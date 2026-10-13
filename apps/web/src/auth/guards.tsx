@@ -1,14 +1,17 @@
+import type { ReactNode } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import type { StaffRole } from "@ezysource/domain";
 import { ApiRequestError } from "../lib/api";
+import { Button } from "../components/Button";
 import { GlassCard } from "../components/GlassCard";
 import { useAuth, useMe } from "./AuthProvider";
 
-function Status({ title, detail }: { title: string; detail?: string }) {
+function Status({ title, detail, children }: { title: string; detail?: string; children?: ReactNode }) {
   return (
     <GlassCard className="page__notice" role="status">
       <p className="page__row-title">{title}</p>
       {detail ? <p className="page__meta">{detail}</p> : null}
+      {children}
     </GlassCard>
   );
 }
@@ -29,7 +32,7 @@ type Props = {
  * permission again on each request (specs/02).
  */
 export function RequireAuth({ staff, allowPreviewWithoutAuth = false }: Props) {
-  const { adapter, signedIn } = useAuth();
+  const { adapter, signedIn, signOut } = useAuth();
   const location = useLocation();
   const me = useMe();
 
@@ -42,7 +45,15 @@ export function RequireAuth({ staff, allowPreviewWithoutAuth = false }: Props) {
     if (me.error instanceof ApiRequestError && me.error.status === 401) {
       return <Navigate to={loginPath(location)} replace />;
     }
-    return <Status title="Something went wrong" detail="Please refresh the page and try again." />;
+    return (
+      <Status title="Something went wrong" detail="Please refresh the page and try again.">
+        <div className="page__actions">
+          <Button variant="secondary" onClick={() => void signOut()}>
+            Sign out
+          </Button>
+        </div>
+      </Status>
+    );
   }
 
   if (staff) {
