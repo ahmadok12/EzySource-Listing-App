@@ -11,13 +11,25 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
-  // Private media bucket; the API is its only reader (specs/08). Created in Milestone 0 step 4.
+  // Private media bucket; the API is its only reader (specs/08).
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }],
+  // Local development. Put DATABASE_URL and SUPABASE_URL in .dev.vars (see .dev.vars.example).
   "vars": {
     "APP_ENV": "local",
     "APP_VERSION": "0.0.0"
+  },
+  "env": {
+    // Deployed by .github/workflows/deploy.yml. Bindings and vars are not inherited, so
+    // they are repeated here. DATABASE_URL is a Worker secret set in the Cloudflare
+    // dashboard, never committed. See docs/deploy.md.
+    "staging": {
+      "name": "ezysource-staging",
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }],
+      "vars": {
+        "APP_ENV": "staging",
+        "APP_VERSION": "0.0.0",
+        "SUPABASE_URL": "https://gmgyqrvwknmcditcaekl.supabase.co"
+      }
+    }
   }
-  // SUPABASE_URL is set per environment as a var; DATABASE_URL is a secret.
-  // Secrets (database URL, AI keys) are set with `wrangler secret put`
-  // or a local .dev.vars file. Names are listed in .dev.vars.example. Never commit values.
 }
