@@ -37,7 +37,15 @@ export const memberNav: NavItem[] = [
 ];
 
 export const adminNav: NavItem[] = [
-  { to: "/admin/collection", label: "Collection", icon: Camera, milestone: 1, mobile: true },
+  {
+    to: "/admin/collection",
+    label: "Collection",
+    icon: Camera,
+    milestone: 1,
+    mobile: true,
+    ready: true,
+    roles: ["collector", "admin", "owner"],
+  },
   { to: "/admin/review", label: "Review", icon: ClipboardCheck, milestone: 2, mobile: true },
   { to: "/admin/shops", label: "Shops", icon: Store, milestone: 2, mobile: true },
   { to: "/admin/maps", label: "Maps", icon: Map, milestone: 4, mobile: true },

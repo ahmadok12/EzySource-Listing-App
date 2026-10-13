@@ -24,3 +24,21 @@
   font: var(--text-meta);
   color: var(--neutral-700);
 }
+
+.field__input--area {
+  height: auto;
+  min-height: 88px;
+  padding: var(--space-3);
+  font: var(--text-body);
+  resize: vertical;
+}
+
+.field__input[aria-invalid="true"] {
+  border-color: var(--accent-400);
+  background: var(--accent-100);
+}
+
+.field__error {
+  font: var(--text-meta);
+  color: var(--accent-700);
+}
