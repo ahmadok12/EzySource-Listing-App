@@ -24,9 +24,10 @@
     // dashboard, never committed. See docs/deploy.md.
     // The R2 binding is left out until the `ezysource-media` bucket exists; until then
     // file requests return 503 "File storage isn't configured" rather than failing deploys.
-    // Add back: "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }]
+    // Then set: "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }]
     "staging": {
       "name": "ezysource-staging",
+      "r2_buckets": [],
       "vars": {
         "APP_ENV": "staging",
         "APP_VERSION": "0.0.0",
