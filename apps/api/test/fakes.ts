@@ -55,6 +55,7 @@ export class FakeWorld {
             .map((u) => ({ ...u, roles: this.roles.get(u.id)! })),
       },
       media: { get: async (id) => this.media.get(id) ?? null },
+      collection: null,
       store: this.store,
       close: async () => {},
     };

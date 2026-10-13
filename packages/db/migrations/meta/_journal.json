@@ -15,6 +15,20 @@
       "when": 1791885771066,
       "tag": "0001_lock_down_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791889075448,
+      "tag": "0002_collection",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791889090945,
+      "tag": "0003_collection_access",
+      "breakpoints": true
     }
   ]
 }

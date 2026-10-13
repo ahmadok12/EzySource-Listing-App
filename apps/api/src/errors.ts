@@ -1,17 +1,9 @@
 import type { Context } from "hono";
-import { errorStatus, type ApiErrorBody, type ErrorCode } from "@ezysource/domain";
+import { DomainError, errorStatus, type ApiErrorBody, type ErrorCode } from "@ezysource/domain";
 import type { AppBindings } from "./env";
 
 /** A safe, expected failure. Its message is shown to the client as-is. */
-export class ApiError extends Error {
-  constructor(
-    readonly code: ErrorCode,
-    message: string,
-    readonly fieldErrors?: Record<string, string[]>,
-  ) {
-    super(message);
-  }
-}
+export class ApiError extends DomainError {}
 
 export function errorResponse(
   c: Context<AppBindings>,
