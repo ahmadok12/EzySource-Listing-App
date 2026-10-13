@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { MeResponse } from "@ezysource/domain";
@@ -121,6 +121,28 @@ describe("sign-in flow", () => {
     fireEvent.change(await screen.findByLabelText("Code"), { target: { value: "123456" } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/login/mfa"));
+  });
+
+  it("offers password sign-in only on testing builds", async () => {
+    mockApi(me(["collector"]));
+    const adapter = {
+      ...fakeAdapter(false),
+      signInWithPassword: vi.fn(async () => {}),
+    };
+    renderAt("/login", { adapter });
+    await screen.findByLabelText("Email");
+    expect(screen.queryByRole("button", { name: /Use a password/ })).toBeNull();
+    cleanup();
+
+    vi.stubEnv("VITE_ALLOW_PASSWORD_SIGN_IN", "true");
+    const router = renderAt("/login", { adapter });
+    fireEvent.click(await screen.findByRole("button", { name: /Use a password/ }));
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "test@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "long test password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/admin"));
+    expect(adapter.signInWithPassword).toHaveBeenCalledWith("test@example.com", "long test password");
+    vi.unstubAllEnvs();
   });
 
   it("ignores off-site post-login destinations", () => {
