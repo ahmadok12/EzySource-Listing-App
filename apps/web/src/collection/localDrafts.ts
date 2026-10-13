@@ -1,4 +1,5 @@
 import type { ShopForm } from "./form";
+import { DRAFT_FORMS, objectStore, openCollectorDb, request } from "./idb";
 
 /**
  * Unsent shop forms kept on this device (specs/04 "Recovery and accidental closing").
@@ -26,47 +27,14 @@ export interface LocalDraftStore {
   remove(localId: string): Promise<void>;
 }
 
-const DB_NAME = "ezysource-collector";
-const STORE = "draft-forms";
-
-function request<T>(req: IDBRequest<T>) {
-  return new Promise<T>((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB request failed"));
-  });
-}
-
 class IndexedDbDraftStore implements LocalDraftStore {
-  private db: Promise<IDBDatabase> | null = null;
-
-  private open() {
-    this.db ??= new Promise<IDBDatabase>((resolve, reject) => {
-      if (typeof indexedDB === "undefined") {
-        reject(new Error("IndexedDB is not available"));
-        return;
-      }
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => {
-        const store = req.result.createObjectStore(STORE, { keyPath: "localId" });
-        store.createIndex("userId", "userId");
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error ?? new Error("Could not open IndexedDB"));
-      req.onblocked = () => reject(new Error("IndexedDB is blocked"));
-    });
-    this.db.catch(() => {
-      this.db = null;
-    });
-    return this.db;
-  }
-
-  private async store(mode: IDBTransactionMode) {
-    return (await this.open()).transaction(STORE, mode).objectStore(STORE);
+  private store(mode: IDBTransactionMode) {
+    return objectStore(DRAFT_FORMS, mode);
   }
 
   async available() {
     try {
-      await this.open();
+      await openCollectorDb();
       // Private browsing and full disks can still refuse writes; probe one.
       const probe = await this.store("readwrite");
       await request(probe.put({ localId: "__probe__", userId: "" }));

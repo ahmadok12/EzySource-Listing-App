@@ -29,6 +29,20 @@
       "when": 1791889090945,
       "tag": "0003_collection_access",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791907304368,
+      "tag": "0004_media_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791907312979,
+      "tag": "0005_media_access",
+      "breakpoints": true
     }
   ]
 }

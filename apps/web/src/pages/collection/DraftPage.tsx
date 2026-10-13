@@ -18,6 +18,9 @@ import {
   type ShopForm,
 } from "../../collection/form";
 import { formatTime } from "../../collection/format";
+import { ContactMedia, ShopMedia } from "../../collection/media";
+import { useUploadQueue, type QueuedUpload } from "../../collection/uploads";
+import { useCollectorId } from "../../collection/useCollectorId";
 import { useDraft, useDraftActions, useReference } from "../../collection/queries";
 import { ApiRequestError } from "../../lib/api";
 import "../pages.css";
@@ -40,6 +43,7 @@ export function DraftPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const justSaved = (location.state as { saved?: boolean } | null)?.saved === true;
+  const queue = useUploadQueue(useCollectorId());
 
   if (draft.isError) {
     const gone = draft.error instanceof ApiRequestError && draft.error.status === 404;
@@ -89,7 +93,8 @@ export function DraftPage() {
       </div>
 
       <ShopDetails draft={d} reference={reference.data} onReload={() => void draft.refetch()} />
-      <Contacts draft={d} onReload={() => void draft.refetch()} />
+      <ShopMedia draft={d} queue={queue} />
+      <Contacts draft={d} queue={queue} onReload={() => void draft.refetch()} />
 
       <Button className="collect__new" onClick={() => navigate("/admin/collection/new")}>
         <Plus size={20} aria-hidden="true" /> Next shop
@@ -249,7 +254,15 @@ function ShopDetails({
   );
 }
 
-function Contacts({ draft, onReload }: { draft: Draft; onReload: () => void }) {
+function Contacts({
+  draft,
+  queue,
+  onReload,
+}: {
+  draft: Draft;
+  queue: readonly QueuedUpload[];
+  onReload: () => void;
+}) {
   const { addContact, updateContact } = useDraftActions(draft.id);
   const [form, setForm] = useState<{ contactId: string | null; values: ContactForm } | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -333,6 +346,7 @@ function Contacts({ draft, onReload }: { draft: Draft; onReload: () => void }) {
                 {c.isPrimary ? <span className="collect__badge">Main contact</span> : null}
               </div>
               <ChannelList channels={c.channels} />
+              <ContactMedia draft={draft} queue={queue} contactId={c.id} />
               <div className="page__actions">
                 <Button variant="secondary" onClick={() => open(c.id)} disabled={busy}>
                   Edit

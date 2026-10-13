@@ -116,7 +116,9 @@ describe("private media", () => {
 
   beforeEach(() => {
     const uploader = world.userFor("uploader");
-    world.store.put("private/a.jpg", bytes);
+    world.roles.set(uploader.id, ["collector"]);
+    world.readable.set(assetId, new Set([uploader.id]));
+    world.store.set("private/a.jpg", bytes);
     world.media.set(assetId, {
       id: assetId,
       objectKey: "private/a.jpg",
@@ -129,7 +131,7 @@ describe("private media", () => {
 
   const path = `/api/media/${assetId}/content`;
 
-  it("serves the uploader's own file with private, sandboxed headers", async () => {
+  it("serves a file on the collector's draft with private, sandboxed headers", async () => {
     const res = await get(path, await issuer.sign("uploader"));
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("0123456789");
@@ -140,6 +142,13 @@ describe("private media", () => {
 
   it("requires sign-in", async () => {
     expect((await get(path)).status).toBe(401);
+  });
+
+  it("stops serving as soon as the collector's access to the draft ends", async () => {
+    const token = await issuer.sign("uploader");
+    expect((await get(path, token)).status).toBe(200);
+    world.readable.delete(assetId);
+    expect((await get(path, token)).status).toBe(404);
   });
 
   it("hides other people's files behind a 404", async () => {

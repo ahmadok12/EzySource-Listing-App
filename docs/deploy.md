@@ -28,7 +28,7 @@ Before public launch (not needed for staging): set up custom SMTP under Authenti
 
 ### Cloudflare dashboard
 
-1. **R2 (can wait).** Enable R2 (it may ask for a payment method even on the free allowance), then create a bucket named `ezysource-media` with public access off. Staging deploys without it; private file requests return 503 until the bucket exists and the `r2_buckets` line in `apps/api/wrangler.jsonc` (staging) is restored.
+1. **R2 (can wait).** Enable R2 (it may ask for a payment method even on the free allowance), then create a bucket named `ezysource-media` with public access off. Staging binds it as `MEDIA` (`apps/api/wrangler.jsonc`), so deploys fail if the bucket is missing or the API token lacks R2 access.
 2. **workers.dev subdomain.** Open Workers & Pages once and accept the subdomain it offers.
 3. **API token.** My Profile → API Tokens → Create Token → template *Edit Cloudflare Workers*. Limit it to this account. Once R2 is in use, also add *Account → Workers R2 Storage → Edit*.
 
