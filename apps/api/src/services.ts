@@ -1,6 +1,18 @@
 import {
+  addDraftContact,
   createDb,
+  createDraft,
+  finishCollectionSession,
   getActiveStaffRoles,
+  getCollectionContext,
+  getCollectionReference,
+  getDraft,
+  listDrafts,
+  startCollectionSession,
+  updateCollectionSession,
+  updateDraft,
+  updateDraftContact,
+  type Database,
   getMediaAsset,
   listActiveStaff,
   resolveUserForIdentity,
@@ -28,10 +40,44 @@ export type Services = {
     listStaff(): Promise<Array<AppUser & { roles: StaffRole[] }>>;
   } | null;
   media: { get(id: string): Promise<MediaAssetRecord | null> } | null;
+  collection: CollectionService | null;
   store: ObjectStore | null;
   /** Releases per-request resources such as database connections. */
   close(): Promise<void>;
 };
+
+type WithoutDb<F> = F extends (db: Database, ...args: infer A) => infer R ? (...args: A) => R : never;
+
+/** Shop collection operations. Each one checks the actor's access itself (packages/db/src/collection.ts). */
+export type CollectionService = {
+  reference: WithoutDb<typeof getCollectionReference>;
+  context: WithoutDb<typeof getCollectionContext>;
+  startSession: WithoutDb<typeof startCollectionSession>;
+  updateSession: WithoutDb<typeof updateCollectionSession>;
+  finishSession: WithoutDb<typeof finishCollectionSession>;
+  createDraft: WithoutDb<typeof createDraft>;
+  getDraft: WithoutDb<typeof getDraft>;
+  listDrafts: WithoutDb<typeof listDrafts>;
+  updateDraft: WithoutDb<typeof updateDraft>;
+  addContact: WithoutDb<typeof addDraftContact>;
+  updateContact: WithoutDb<typeof updateDraftContact>;
+};
+
+export function createCollectionService(db: Database): CollectionService {
+  return {
+    reference: () => getCollectionReference(db),
+    context: (...a) => getCollectionContext(db, ...a),
+    startSession: (...a) => startCollectionSession(db, ...a),
+    updateSession: (...a) => updateCollectionSession(db, ...a),
+    finishSession: (...a) => finishCollectionSession(db, ...a),
+    createDraft: (...a) => createDraft(db, ...a),
+    getDraft: (...a) => getDraft(db, ...a),
+    listDrafts: (...a) => listDrafts(db, ...a),
+    updateDraft: (...a) => updateDraft(db, ...a),
+    addContact: (...a) => addDraftContact(db, ...a),
+    updateContact: (...a) => updateDraftContact(db, ...a),
+  };
+}
 
 export type ServicesFactory = (env: Env) => Services;
 
@@ -49,6 +95,7 @@ export const createServices: ServicesFactory = (env) => {
         }
       : null,
     media: db ? { get: (id) => getMediaAsset(db, id) } : null,
+    collection: db ? createCollectionService(db) : null,
     store: env.MEDIA ? new R2ObjectStore(env.MEDIA) : null,
     close: async () => {
       await database?.sql.end({ timeout: 5 });

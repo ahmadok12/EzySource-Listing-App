@@ -2,7 +2,7 @@
 
 PostgreSQL schema, migrations and the owner setup command. Schema source is `src/schema.ts` (Drizzle); SQL migrations live in `migrations/`. See specs/03, specs/08 and specs/12.
 
-## What is in place (Milestone 0)
+## Accounts and access (Milestone 0)
 
 | Table (`app` schema) | Purpose |
 | --- | --- |
@@ -13,7 +13,23 @@ PostgreSQL schema, migrations and the owner setup command. Schema source is `src
 | `idempotency_keys` | Actor + operation scoped retries |
 | `media_assets` | Metadata for private objects; bytes stay in object storage |
 
-Directory, collection, subscription and map tables arrive with the milestones that use them.
+## Collection (Milestone 1)
+
+| Table | Purpose |
+| --- | --- |
+| `markets`, `districts`, `floors` | Market locations. Seeded with Futian districts 1-6, floors F1-F4 (to be confirmed by the owner) |
+| `categories` | Category tree. Seeded with starter top-level categories |
+| `collection_sessions` | A collector's working period and location/category defaults; one open session each |
+| `shops` | Stable supplier identity; `published_revision_id` is set only by publishing |
+| `shop_revisions` | A versioned snapshot of shop fields. Drafts are revisions in state `draft` |
+| `revision_categories`, `revision_keywords` | Categories (one main) and product keywords for a revision |
+| `contacts`, `revision_contacts`, `contact_channels` | People and their channels per revision; a channel without a contact belongs to the shop |
+| `record_grants` | Server-evaluated access for a collector to one revision |
+| `collector_policies` | Per-collector access mode; no row means review then submit |
+
+Collector access is checked in `src/collection.ts` on every read and write: an unrevoked, unexpired grant (database clock), an editable state and, for immediate handoff, the draft's session still being open. Owners and admins are not limited by grants. Reference tables are read-only for the API, and the API cannot delete shops, revisions, contacts, grants or sessions.
+
+Subscription and map tables arrive with the milestones that use them.
 
 ## Access model
 

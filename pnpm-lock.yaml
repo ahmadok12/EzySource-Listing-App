@@ -36,6 +36,12 @@ importers:
       '@cloudflare/workers-types':
         specifier: 5.20261013.1
         version: 5.20261013.1
+      '@types/node':
+        specifier: 22.19.1
+        version: 22.19.1
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@cloudflare/workers-types@5.20261013.1)(postgres@3.4.9)
       jose:
         specifier: 6.2.12
         version: 6.2.12
