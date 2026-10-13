@@ -22,9 +22,11 @@
     // Deployed by .github/workflows/deploy.yml. Bindings and vars are not inherited, so
     // they are repeated here. DATABASE_URL is a Worker secret set in the Cloudflare
     // dashboard, never committed. See docs/deploy.md.
+    // The R2 binding is left out until the `ezysource-media` bucket exists; until then
+    // file requests return 503 "File storage isn't configured" rather than failing deploys.
+    // Add back: "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }]
     "staging": {
       "name": "ezysource-staging",
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ezysource-media" }],
       "vars": {
         "APP_ENV": "staging",
         "APP_VERSION": "0.0.0",
