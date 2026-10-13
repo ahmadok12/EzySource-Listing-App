@@ -92,7 +92,7 @@ describe("public pages", () => {
   });
 
   it("hides unfinished areas when previews are off", () => {
-    renderAt("/admin/collection", { adapter: fakeAdapter(true) });
+    renderAt("/admin/review", { adapter: fakeAdapter(true) });
     expect(screen.getByRole("heading", { name: "Page not found" })).toBeTruthy();
   });
 });
@@ -168,8 +168,10 @@ describe("navigation", () => {
 
   it("shows only built, permitted items outside previews", () => {
     const collector = visibleNav(adminNav, { previewShells: false, staffRoles: ["collector"] });
-    expect(collector).toEqual([]);
+    expect(collector.map((i) => i.label)).toEqual(["Collection"]);
+    const mapper = visibleNav(adminNav, { previewShells: false, staffRoles: ["mapper"] });
+    expect(mapper).toEqual([]);
     const owner = visibleNav(adminNav, { previewShells: false, staffRoles: ["owner"] });
-    expect(owner.map((i) => i.label)).toEqual(["Staff"]);
+    expect(owner.map((i) => i.label)).toEqual(["Collection", "Staff"]);
   });
 });

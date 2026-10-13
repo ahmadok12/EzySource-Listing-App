@@ -21,15 +21,40 @@ export function setApiTokenProvider(provider: () => Promise<string | null>) {
 }
 
 /** All UI data access goes through the app API, never directly to the database (specs/08). */
-export async function apiGet<T>(path: string, parse: (data: unknown) => T): Promise<T> {
+export function apiGet<T>(path: string, parse: (data: unknown) => T): Promise<T> {
+  return apiRequest("GET", path, parse);
+}
+
+/** Sends JSON to the API. `headers` carries extras such as an Idempotency-Key. */
+export function apiSend<T>(
+  method: "POST" | "PATCH",
+  path: string,
+  body: unknown,
+  parse: (data: unknown) => T,
+  headers: Record<string, string> = {},
+): Promise<T> {
+  return apiRequest(method, path, parse, body, headers);
+}
+
+async function apiRequest<T>(
+  method: string,
+  path: string,
+  parse: (data: unknown) => T,
+  body?: unknown,
+  headers: Record<string, string> = {},
+): Promise<T> {
   const token = await tokenProvider();
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
+      method,
       headers: {
         accept: "application/json",
+        ...(body === undefined ? {} : { "content-type": "application/json" }),
+        ...headers,
         ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       credentials: "omit",
     });
   } catch {

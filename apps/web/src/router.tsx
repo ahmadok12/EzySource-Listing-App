@@ -11,6 +11,9 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { PlannedPage } from "./pages/PlannedPage";
 import { AdminHomePage } from "./pages/admin/AdminHomePage";
 import { StaffPage } from "./pages/admin/StaffPage";
+import { CollectionHomePage } from "./pages/collection/CollectionHomePage";
+import { DraftPage } from "./pages/collection/DraftPage";
+import { NewShopPage } from "./pages/collection/NewShopPage";
 
 /** Unfinished destinations are registered only when previews are on. */
 function plannedRoutes(nav: NavItem[], previewShells: boolean): RouteObject[] {
@@ -60,6 +63,14 @@ export function buildRoutes({ previewShells }: { previewShells: boolean }): Rout
             {
               element: <RequireAuth staff={["owner", "admin"]} {...preview} />,
               children: [{ path: "/admin/staff", element: <StaffPage /> }],
+            },
+            {
+              element: <RequireAuth staff={["collector", "admin", "owner"]} {...preview} />,
+              children: [
+                { path: "/admin/collection", element: <CollectionHomePage /> },
+                { path: "/admin/collection/new", element: <NewShopPage /> },
+                { path: "/admin/drafts/:id", element: <DraftPage /> },
+              ],
             },
             ...plannedRoutes(adminNav, previewShells),
           ],

@@ -11,6 +11,10 @@
   height: var(--app-bar-height);
   padding: 0 var(--space-4);
   padding-top: env(safe-area-inset-top);
+  /* Content scrolls under the bar, so it needs its own glass. */
+  background: rgba(243, 241, 246, 0.72);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
 
 .shell__main {
