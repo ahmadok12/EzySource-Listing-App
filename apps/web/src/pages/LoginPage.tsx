@@ -16,7 +16,7 @@ export function passwordSignInAllowed() {
 }
 
 export function LoginPage() {
-  const { adapter, signedIn } = useAuth();
+  const { adapter, signedIn, signOut } = useAuth();
   const [params] = useSearchParams();
   const next = safeNext(params.get("next"));
   const navigate = useNavigate();
@@ -63,9 +63,13 @@ export function LoginPage() {
     setError(null);
     try {
       await adapter!.verifyCode(email.trim(), code.trim());
-      await finish();
     } catch {
       setError("That code didn't work. Check it, or send a new one.");
+      setBusy(false);
+      return;
+    }
+    try {
+      await finish();
     } finally {
       setBusy(false);
     }
@@ -77,19 +81,34 @@ export function LoginPage() {
     setError(null);
     try {
       await adapter!.signInWithPassword!(email.trim(), password);
-      await finish();
     } catch {
       setError("That email and password didn't work.");
+      setBusy(false);
+      return;
+    }
+    try {
+      await finish();
     } finally {
       setBusy(false);
     }
   }
 
+  /**
+   * Loads the account after the sign-in itself worked. If our server can't, the sign-in
+   * is undone so the person isn't left half signed in with nothing working.
+   */
   async function finish() {
-    const me = await queryClient.fetchQuery({
-      queryKey: ["me"],
-      queryFn: () => apiGet("/me", meResponseSchema.parse),
-    });
+    let me;
+    try {
+      me = await queryClient.fetchQuery({
+        queryKey: ["me"],
+        queryFn: () => apiGet("/me", meResponseSchema.parse),
+      });
+    } catch {
+      await signOut().catch(() => {});
+      setError("Your sign-in worked, but we couldn't load your account. Try again in a minute.");
+      return;
+    }
     const destination = next ?? (me.staffRoles.length > 0 ? "/admin" : "/account");
     if (me.mfaRequired) {
       navigate(`/login/mfa?next=${encodeURIComponent(destination)}`, { replace: true });
